@@ -12,3 +12,9 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+
+#DLSS Plugins
+Plugins/DLSS
+Plugins/DLSSMoviePipelineSupport
+Plugins/NIS
+Plugins/Streamline
