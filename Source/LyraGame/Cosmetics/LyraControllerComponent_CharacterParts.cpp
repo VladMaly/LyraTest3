@@ -30,6 +30,7 @@ void ULyraControllerComponent_CharacterParts::BeginPlay()
 			if (APawn* ControlledPawn = GetPawn<APawn>())
 			{
 				OnPossessedPawnChanged(nullptr, ControlledPawn);
+				K2_OnPossessedPawnChanged.Broadcast(nullptr, ControlledPawn);
 			}
 		}
 
@@ -127,6 +128,8 @@ void ULyraControllerComponent_CharacterParts::OnPossessedPawnChanged(APawn* OldP
 			}
 		}
 	}
+
+	K2_OnPossessedPawnChanged.Broadcast(OldPawn, NewPawn);
 }
 
 void ULyraControllerComponent_CharacterParts::ApplyDeveloperSettings()

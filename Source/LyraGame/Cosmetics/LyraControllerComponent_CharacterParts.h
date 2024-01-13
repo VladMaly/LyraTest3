@@ -48,6 +48,8 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNLOnPossessedPawnChanged, APawn*, OldPawn, APawn*, NewPawn);
+
 // A component that configure what cosmetic actors to spawn for the owning controller when it possesses a pawn
 UCLASS(meta = (BlueprintSpawnableComponent))
 class ULyraControllerComponent_CharacterParts : public UControllerComponent
@@ -86,6 +88,9 @@ private:
 
 	UFUNCTION()
 	void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
+
+	UPROPERTY(BlueprintAssignable, Category = Cosmetics, BlueprintCallable, meta = (DisplayName = "On Possessed Pawn Changed", AllowPrivateAccess = true))
+	FNLOnPossessedPawnChanged K2_OnPossessedPawnChanged;
 
 	void AddCharacterPartInternal(const FLyraCharacterPart& NewPart, ECharacterPartSource Source);
 
