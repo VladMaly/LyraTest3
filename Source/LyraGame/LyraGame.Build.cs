@@ -43,9 +43,10 @@ public class LyraGame : ModuleRules
 				"AsyncMixin",
 				"ControlFlows",
 				"PropertyPath",
-				"PlayFabGSDK"
-			}
-		);
+				"PlayFabGSDK",
+                "ConsoleVariablesEditor",
+            }
+        );
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[] {
@@ -74,8 +75,12 @@ public class LyraGame : ModuleRules
 				"AudioModulation",
 				"EngineSettings",
 				"DTLSHandlerComponent",
-			}
-		);
+                "DLSS",
+                "Streamline",
+                "StreamlineBlueprint",
+                "DLSSBlueprint"
+            }
+        );
 
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[] {

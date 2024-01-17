@@ -16,6 +16,10 @@
 #include "LyraSettingsShared.h"
 #include "NativeGameplayTags.h"
 #include "Performance/LyraPerformanceSettings.h"
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+#include "NvidiaSettingsManagerInterface.h"
+#include "DLSSLibrary.h"
 #include "Player/LyraLocalPlayer.h"
 
 #define LOCTEXT_NAMESPACE "Lyra"
@@ -101,6 +105,7 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 
 	UGameSettingValueDiscreteDynamic_Enum* WindowModeSetting = nullptr;
 	UGameSetting* MobileFPSType = nullptr;
+	UGameSettingValueDiscreteDynamic_Enum* NvidiaDLSSModeDependency = nullptr;
 
 	// Display
 	////////////////////////////////////////////////////////////////////////////////////
@@ -607,6 +612,198 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 			GraphicsQuality->AddSetting(Setting);
 		}
 
+	}
+
+	// NVIDIA
+	////////////////////////////////////////////////////////////////////////////////////
+
+	{
+		UGameSettingCollection* NvidiaGraphics = NewObject<UGameSettingCollection>();
+		NvidiaGraphics->SetDevName(TEXT("Nvidia DLSS"));
+		NvidiaGraphics->SetDisplayName(LOCTEXT("NvidiaDLSS_Name", "Nvidia DLSS"));
+		Screen->AddSetting(NvidiaGraphics);
+
+		//----------------------------------------------------------------------------------
+		{
+			UGameSettingValueDiscreteDynamic_Enum* Setting = NewObject<UGameSettingValueDiscreteDynamic_Enum>();
+			Setting->SetDevName(TEXT("NvidiaDLSSMode"));
+			Setting->SetDisplayName(LOCTEXT("NvidiaDLSSMode_Name", "Nvidia DLSS Mode"));
+			Setting->SetDescriptionRichText(LOCTEXT("NvidiaDLSSMode_Description", "Select the Nvidia DLSS Mode."));
+
+			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetNvidiaDLSSMode));
+			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetNvidiaDLSSMode));
+			Setting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetNvidiaDLSSMode());
+			Setting->AddEnumOption(ENvidiaDLSSMode::Off, LOCTEXT("NvidiaDLSS_Off", "Off"));
+			Setting->AddEnumOption(ENvidiaDLSSMode::DLAA, LOCTEXT("NvidiaDLSS_DLAA", "DLAA"));
+			Setting->AddEnumOption(ENvidiaDLSSMode::Quality, LOCTEXT("NvidiaDLSS_Quality", "Quality"));
+			Setting->AddEnumOption(ENvidiaDLSSMode::Balanced, LOCTEXT("NvidiaDLSS_Balanced", "Balanced"));
+			Setting->AddEnumOption(ENvidiaDLSSMode::Performance, LOCTEXT("NvidiaDLSS_Performance", "Performance"));
+			Setting->AddEnumOption(ENvidiaDLSSMode::Ultra_Performance, LOCTEXT("NvidiaDLSS_Ultra_Performance", "Ultra Performance"));
+			Setting->AddEnumOption(ENvidiaDLSSMode::Auto, LOCTEXT("NvidiaDLSS_Auto", "Auto"));
+
+			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+
+			NvidiaDLSSModeDependency = Setting;
+
+			Setting->AddEditCondition(MakeShared<FWhenCondition>([](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSSupported();
+
+				if (!bDLSSSupported)
+				{
+					InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported."));
+				}
+			}));
+
+			NvidiaGraphics->AddSetting(Setting);
+		}
+
+		//----------------------------------------------------------------------------------
+		{
+			UGameSettingValueDiscreteDynamic_Number* Setting = NewObject<UGameSettingValueDiscreteDynamic_Number>();
+			Setting->SetDevName(TEXT("NvidiaDLSSSharpness"));
+			Setting->SetDisplayName(LOCTEXT("NvidiaDLSSSharpness_Name", "Nvidia DLSS Sharpness"));
+			Setting->SetDescriptionRichText(LOCTEXT("NvidiaDLSSSharpness_Description", "Nvidia DLSS Sharpness value 0-10."));
+
+			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetNvidiaDLSSSharpness));
+			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetNvidiaDLSSSharpness));
+			Setting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetNvidiaDLSSSharpness());
+			for (int32 Index = 0; Index <= 10; Index++)
+			{
+				Setting->AddOption(Index, FText::AsNumber(Index));
+			}
+
+			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+
+			Setting->AddEditDependency(NvidiaDLSSModeDependency);
+			Setting->AddEditCondition(MakeShared<FWhenCondition>([NvidiaDLSSModeDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
+				const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSSupported();
+
+				if (!bDLSSSupported || bDLSSModeOff)
+				{
+					InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported and not off."));
+				}
+			}));
+
+			/*
+			Setting->AddEditDependency(NvidiaDLSSModeDependency);
+			Setting->AddEditCondition(MakeShared<FWhenCondition>([this, WindowModeSetting, NvidiaDLSSModeDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
+				if (GEngine)
+				{
+					if (const UWorld* World = GEngine->GetCurrentPlayWorld())
+					{
+						if (World->GetGameInstance()->GetClass()->ImplementsInterface(UNvidiaSettingsManagerInterface::StaticClass()))
+						{
+							const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
+							const bool bDLSSSupported = INvidiaSettingsManagerInterface::Execute_GetDLSSSupported(World->GetGameInstance());
+
+							if (!bDLSSSupported || bDLSSModeOff)
+							{
+								InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported and not off."));
+							}
+						}
+					}
+				}
+			}));
+			*/
+
+			NvidiaGraphics->AddSetting(Setting);
+		}
+
+		//----------------------------------------------------------------------------------
+		{
+			UGameSettingValueDiscreteDynamic_Bool* Setting = NewObject<UGameSettingValueDiscreteDynamic_Bool>();
+			Setting->SetDevName(TEXT("NvidiaDLSSFrameGeneration"));
+			Setting->SetDisplayName(LOCTEXT("NvidiaDLSSFrameGeneration_Name", "Nvidia DLSS Frame Generation"));
+			Setting->SetDescriptionRichText(LOCTEXT("NvidiaDLSSFrameGeneration_Description", "Whether to enable Nvidia DLSS Frame Generation."));
+
+			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetNvidiaDLSSFrameGenerationEnabled));
+			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetNvidiaDLSSFrameGenerationEnabled));
+			Setting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetNvidiaDLSSFrameGenerationEnabled());
+
+			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+
+			Setting->AddEditDependency(NvidiaDLSSModeDependency);
+			Setting->AddEditCondition(MakeShared<FWhenCondition>([NvidiaDLSSModeDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
+				const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSSupported();
+				const bool bDLSSHardwareCompatible = UDLSSLibrary::QueryDLSSSupport() != UDLSSSupport::NotSupportedIncompatibleHardware;
+
+				if (!bDLSSSupported || !bDLSSHardwareCompatible || bDLSSModeOff)
+				{
+					InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported, hardware compatible and not off."));
+				}
+			}));
+
+			NvidiaGraphics->AddSetting(Setting);
+		}
+
+		//----------------------------------------------------------------------------------
+		{
+			UGameSettingValueDiscreteDynamic_Enum* Setting = NewObject<UGameSettingValueDiscreteDynamic_Enum>();
+			Setting->SetDevName(TEXT("NvidiaReflex"));
+			Setting->SetDisplayName(LOCTEXT("NvidiaReflex_Name", "Nvidia Reflex"));
+			Setting->SetDescriptionRichText(LOCTEXT("NvidiaReflex_Description", "Select the Nvidia Reflex."));
+
+			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetNvidiaReflex));
+			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetNvidiaReflex));
+			Setting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetNvidiaReflex());
+			Setting->AddEnumOption(ENvidiaReflex::Disabled, LOCTEXT("NvidiaReflex_Disabled", "Disabled"));
+			Setting->AddEnumOption(ENvidiaReflex::Enabled, LOCTEXT("NvidiaReflex_Enabled", "Enabled"));
+			Setting->AddEnumOption(ENvidiaReflex::Enabled_Boost, LOCTEXT("NvidiaReflex_Enabled_Boost", "Enabled Boost"));
+
+			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+
+			Setting->AddEditDependency(NvidiaDLSSModeDependency);
+			Setting->AddEditCondition(MakeShared<FWhenCondition>([NvidiaDLSSModeDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
+				const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSSupported();
+
+				if (!bDLSSSupported || bDLSSModeOff)
+				{
+					InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported and not off."));
+				}
+			}));
+
+			NvidiaGraphics->AddSetting(Setting);
+		}
+
+		/*
+		//----------------------------------------------------------------------------------
+		{
+			UGameSettingValueDiscreteDynamic_Bool* Setting = NewObject<UGameSettingValueDiscreteDynamic_Bool>();
+			Setting->SetDevName(TEXT("RayTracing"));
+			Setting->SetDisplayName(LOCTEXT("RayTracing_Name", "Ray Tracing"));
+			Setting->SetDescriptionRichText(LOCTEXT("RayTracing_Description", "Whether to enable Ray Tracing."));
+
+			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetIsRayTracingEnabled));
+			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetRayTracingEnabled));
+			Setting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetIsRayTracingEnabled());
+
+			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+
+			NvidiaGraphics->AddSetting(Setting);
+		}
+
+		//----------------------------------------------------------------------------------
+		{
+			UGameSettingValueDiscreteDynamic_Enum* Setting = NewObject<UGameSettingValueDiscreteDynamic_Enum>();
+			Setting->SetDevName(TEXT("UpscalingMode"));
+			Setting->SetDisplayName(LOCTEXT("UpscalingMode_Name", "Upscaling Mode"));
+			Setting->SetDescriptionRichText(LOCTEXT("UpscalingMode_Description", "Select the upscaling mode, by default is the Built-In, you get to additionally choose Nvidia DLSS or Nvidia Image Scaling."));
+
+			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetNvidiaUpscaling));
+			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetNvidiaUpscaling));
+			Setting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetNvidiaUpscaling());
+			Setting->AddEnumOption(EVideoUpscalingMode::BuiltIn, LOCTEXT("VideoUpscalingBuiltIn", "Built-In"));
+			Setting->AddEnumOption(EVideoUpscalingMode::NvidiaDLSS, LOCTEXT("VideoUpscalingNvidiaDLSS", "Nvidia DLSS"));
+			Setting->AddEnumOption(EVideoUpscalingMode::NvidiaImageSampling, LOCTEXT("VideoUpscalingNvidiaImageSampling", "Nvidia Image Sampling"));
+
+			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+
+			NvidiaGraphics->AddSetting(Setting);
+		}
+		*/
 	}
 
 	// Advanced Graphics

@@ -2,6 +2,7 @@
 
 #include "LyraSettingsLocal.h"
 #include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
 #include "EnhancedActionKeyMapping.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Engine/World.h"
@@ -25,6 +26,10 @@
 #include "AudioModulationStatics.h"
 #include "Audio/LyraAudioSettings.h"
 #include "Audio/LyraAudioMixEffectsSubsystem.h"
+#include "ConsoleVariablesEditorCommandInfo.h"
+#include "ConsoleVariablesEditorLog.h"
+#include "ConsoleVariablesEditorModule.h"
+#include "NvidiaSettingsManagerInterface.h"
 #include "EnhancedActionKeyMapping.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(LyraSettingsLocal)
@@ -382,7 +387,6 @@ void ULyraSettingsLocal::LoadSettings(bool bForceReload)
 	bDesiredHeadphoneMode = bUseHeadphoneMode;
 	SetHeadphoneModeEnabled(bUseHeadphoneMode);
 
-
 	DesiredUserChosenDeviceProfileSuffix = UserChosenDeviceProfileSuffix;
 
 	LyraSettingsHelpers::FillScalabilitySettingsFromDeviceProfile(DeviceDefaultScalabilitySettings);
@@ -674,6 +678,11 @@ bool ULyraSettingsLocal::IsSupportedMobileFramePace(int32 TestFPS)
 	return bIsDefault || (bDoesNotExceedLimit && bIsSupportedPace);
 }
 
+void ULyraSettingsLocal::SetDLSSGMode(UStreamlineDLSSGMode DLSSGMode)
+{
+	UStreamlineLibraryDLSSG::SetDLSSGMode(DLSSGMode);
+}
+
 int32 ULyraSettingsLocal::GetFirstFrameRateWithQualityLimit() const
 {
 	return LyraSettingsHelpers::GetFirstFrameRateWithQualityLimit();
@@ -863,6 +872,166 @@ bool ULyraSettingsLocal::IsHeadphoneModeEnabled() const
 {
 	return bUseHeadphoneMode;
 }
+
+// Nvidia Upscaling
+
+void ULyraSettingsLocal::SetNvidiaUpscaling(EVideoUpscalingMode InVideoUpscalingMode)
+{
+	NvidiaUpscaling = InVideoUpscalingMode;
+}
+
+EVideoUpscalingMode ULyraSettingsLocal::GetNvidiaUpscaling() const
+{
+	return NvidiaUpscaling;
+}
+
+// Ray Tracing
+
+void ULyraSettingsLocal::SetRayTracingEnabled(bool InEnableRayTracing)
+{
+	bRayTracing = InEnableRayTracing;
+
+	FConsoleVariablesEditorModule& ConsoleVariablesEditorModule = FConsoleVariablesEditorModule::Get();
+
+	const FString CommandName_RayTraceForceAllEffects = "r.RayTracing.ForceAllRayTracingEffects";
+	if (const TWeakPtr<FConsoleVariablesEditorCommandInfo> CommandInfo_RayTraceForceAllEffects = ConsoleVariablesEditorModule.FindCommandInfoByName(CommandName_RayTraceForceAllEffects); CommandInfo_RayTraceForceAllEffects.IsValid())
+	{
+		if (CommandInfo_RayTraceForceAllEffects.Pin()->GetConsoleVariablePtr())
+		{
+			const FString TargetRayTraceForceAllEffects = bRayTracing ? "-1" : "0";
+
+			CommandInfo_RayTraceForceAllEffects.Pin()->ExecuteCommand(TargetRayTraceForceAllEffects, true);
+		}
+		else
+		{
+		UE_LOG(LogConsoleVariablesEditor, Error,
+			TEXT("%hs: Command %s is not a variable type. Please do not enter console commands, only console variables."),
+			__FUNCTION__, *CommandName_RayTraceForceAllEffects);
+		}
+	}
+
+	const FString CommandName_LumenHardwareRayTracing = "r.lumen.hardwareraytracing";
+	if (const TWeakPtr<FConsoleVariablesEditorCommandInfo> CommandInfo_LumenHardwareRayTracing = ConsoleVariablesEditorModule.FindCommandInfoByName(CommandName_LumenHardwareRayTracing); CommandInfo_LumenHardwareRayTracing.IsValid())
+	{
+		if (CommandInfo_LumenHardwareRayTracing.Pin()->GetConsoleVariablePtr())
+		{
+			const FString TargetLumenHardwareRayTracing = bRayTracing ? "1" : "0";
+
+			CommandInfo_LumenHardwareRayTracing.Pin()->ExecuteCommand(TargetLumenHardwareRayTracing, true);
+		}
+		else
+		{
+			UE_LOG(LogConsoleVariablesEditor, Error,
+				TEXT("%hs: Command %s is not a variable type. Please do not enter console commands, only console variables."),
+				__FUNCTION__, *CommandName_LumenHardwareRayTracing);
+		}
+	}
+}
+
+bool ULyraSettingsLocal::GetIsRayTracingEnabled() const
+{
+	return bRayTracing;
+}
+
+// Nvidia DLSS Mode
+
+void ULyraSettingsLocal::SetNvidiaDLSSMode(ENvidiaDLSSMode InNvidiaDLSSMode)
+{
+	NvidiaDLSSMode = InNvidiaDLSSMode;
+
+	if (GEngine)
+	{
+		if (const UWorld* World = GEngine->GetCurrentPlayWorld())
+		{
+			if (World->GetGameInstance()->GetClass()->ImplementsInterface(UNvidiaSettingsManagerInterface::StaticClass()))
+			{
+				INvidiaSettingsManagerInterface::Execute_SetNvidiaDLSSMode(World->GetGameInstance(), NvidiaDLSSMode);
+			}
+		}
+	}
+}
+
+ENvidiaDLSSMode ULyraSettingsLocal::GetNvidiaDLSSMode() const
+{
+	return NvidiaDLSSMode;
+}
+
+// Nvidia DLSS Sharpness
+
+void ULyraSettingsLocal::SetNvidiaDLSSSharpness(int32 InNvidiaDLSSSharpness)
+{
+	NvidiaDLSSSharpness = InNvidiaDLSSSharpness;
+
+	if (GEngine)
+	{
+		if (const UWorld* World = GEngine->GetCurrentPlayWorld())
+		{
+			if (World->GetGameInstance()->GetClass()->ImplementsInterface(UNvidiaSettingsManagerInterface::StaticClass()))
+			{
+				INvidiaSettingsManagerInterface::Execute_SetNvidiaDLSSSharpness(World->GetGameInstance(), NvidiaDLSSSharpness);
+			}
+		}
+	}
+}
+
+int32 ULyraSettingsLocal::GetNvidiaDLSSSharpness() const
+{
+	return NvidiaDLSSSharpness;
+}
+
+// Nvidia DLSS Frame Generation
+
+void ULyraSettingsLocal::SetNvidiaDLSSFrameGenerationEnabled(bool bInEnable)
+{
+	bNvidiaDLSSFrameGeneration = bInEnable;
+
+	if (GEngine)
+	{
+		if (const UWorld* World = GEngine->GetCurrentPlayWorld())
+		{
+			if (World->GetGameInstance()->GetClass()->ImplementsInterface(UNvidiaSettingsManagerInterface::StaticClass()))
+			{
+				INvidiaSettingsManagerInterface::Execute_SetNvidiaDLSSFrameGeneration(World->GetGameInstance(), bInEnable);
+			}
+		}
+	}
+}
+
+bool ULyraSettingsLocal::GetNvidiaDLSSFrameGenerationEnabled() const
+{
+	return bNvidiaDLSSFrameGeneration;
+}
+
+// Nvidia Reflex
+
+void ULyraSettingsLocal::SetNvidiaReflex(ENvidiaReflex InNvidiaReflex)
+{
+	NvidiaReflex = InNvidiaReflex;
+
+	UE_LOG(LogConsoleResponse, Log, TEXT("SetNvidiaReflex.1"));
+
+	if (GEngine)
+	{
+		UE_LOG(LogConsoleResponse, Log, TEXT("SetNvidiaReflex.2"));
+
+		if (const UWorld* World = GEngine->GetCurrentPlayWorld())
+		{
+			UE_LOG(LogConsoleResponse, Log, TEXT("SetNvidiaReflex.3"));
+
+			if (World->GetGameInstance()->GetClass()->ImplementsInterface(UNvidiaSettingsManagerInterface::StaticClass()))
+			{
+				INvidiaSettingsManagerInterface::Execute_SetNvidiaReflex(World->GetGameInstance(), InNvidiaReflex);
+			}
+		}
+	}
+}
+
+ENvidiaReflex ULyraSettingsLocal::GetNvidiaReflex() const
+{
+	return NvidiaReflex;
+}
+
+// ---
 
 bool ULyraSettingsLocal::CanModifyHeadphoneModeEnabled() const
 {

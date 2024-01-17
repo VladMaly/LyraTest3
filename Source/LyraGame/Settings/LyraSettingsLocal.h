@@ -5,6 +5,8 @@
 #include "GameFramework/GameUserSettings.h"
 #include "Input/LyraMappableConfigPair.h"
 #include "InputCoreTypes.h"
+#include "StreamlineLibrary.h"
+#include "StreamlineLibraryDLSSG.h"
 
 #include "LyraSettingsLocal.generated.h"
 
@@ -18,6 +20,34 @@ class UPlayerMappableInputConfig;
 class USoundControlBus;
 class USoundControlBusMix;
 struct FFrame;
+
+UENUM(BlueprintType)
+enum class EVideoUpscalingMode : uint8
+{
+	BuiltIn,
+	NvidiaDLSS,
+	NvidiaImageSampling
+};
+
+UENUM(BlueprintType)
+enum class ENvidiaDLSSMode : uint8
+{
+	Off = 0,
+	DLAA,
+	Quality,
+	Balanced,
+	Performance,
+	Ultra_Performance,
+	Auto
+};
+
+UENUM(BlueprintType)
+enum class ENvidiaReflex : uint8
+{
+	Disabled = 0,
+	Enabled,
+	Enabled_Boost
+};
 
 USTRUCT()
 struct FLyraScalabilitySnapshot
@@ -151,6 +181,9 @@ public:
 
 	static bool IsSupportedMobileFramePace(int32 TestFPS);
 
+	UFUNCTION(BlueprintCallable, Category = "Lyra|DLSS-FG", meta = (DisplayName = "Set DLSS-FG Mode Proxy"))
+	static void SetDLSSGMode(UStreamlineDLSSGMode DLSSGMode);
+
 	// Returns the first frame rate at which overall quality is restricted/limited by the current device profile
 	int32 GetFirstFrameRateWithQualityLimit() const;
 
@@ -264,6 +297,74 @@ public:
 	/** Whether to use High Dynamic Range Audio mode (HDR Audio) **/
 	UPROPERTY(config)
 	bool bUseHDRAudioMode;
+
+/** Nvidia */
+
+public:
+	// Nvidia Upscaling
+
+	UFUNCTION()
+	EVideoUpscalingMode GetNvidiaUpscaling() const;
+
+	UFUNCTION()
+	void SetNvidiaUpscaling(EVideoUpscalingMode InVideoUpscalingMode);
+
+	UPROPERTY(config)
+	EVideoUpscalingMode NvidiaUpscaling = EVideoUpscalingMode::BuiltIn;
+
+	// Ray Tracing
+
+	UFUNCTION()
+	bool GetIsRayTracingEnabled() const;
+
+	UFUNCTION()
+	void SetRayTracingEnabled(bool InEnableRayTracing);
+
+	UPROPERTY(config)
+	bool bRayTracing = false;
+
+	// Nvidia DLSS Mode
+
+	UFUNCTION()
+	ENvidiaDLSSMode GetNvidiaDLSSMode() const;
+
+	UFUNCTION()
+	void SetNvidiaDLSSMode(ENvidiaDLSSMode InNvidiaDLSSMode);
+
+	UPROPERTY(config)
+	ENvidiaDLSSMode NvidiaDLSSMode = ENvidiaDLSSMode::Balanced;
+
+	// Nvidia DLSS Sharpness
+	UFUNCTION()
+	int32 GetNvidiaDLSSSharpness() const;
+
+	UFUNCTION()
+	void SetNvidiaDLSSSharpness(int32 InNvidiaDLSSSharpness);
+
+	UPROPERTY(config)
+	int32 NvidiaDLSSSharpness = 5.f;
+
+	// Nvidia DLSS Frame Generation
+
+	UFUNCTION()
+	bool GetNvidiaDLSSFrameGenerationEnabled() const;
+
+	UFUNCTION()
+	void SetNvidiaDLSSFrameGenerationEnabled(bool bInEnable);
+
+	UPROPERTY(config)
+	bool bNvidiaDLSSFrameGeneration = true;
+
+	// Nvidia Reflex
+	
+	UFUNCTION()
+	ENvidiaReflex GetNvidiaReflex() const;
+
+	UFUNCTION()
+	void SetNvidiaReflex(ENvidiaReflex InNvidiaReflex);
+
+	UPROPERTY(config)
+	ENvidiaReflex NvidiaReflex = ENvidiaReflex::Enabled;
 
 public:
 	/** Returns true if this platform can run the auto benchmark */
