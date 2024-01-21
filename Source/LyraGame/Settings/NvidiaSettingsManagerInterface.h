@@ -20,6 +20,9 @@ class INvidiaSettingsManagerInterface
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Nvidia DLSS")
+	void SetNvidiaDLSSEnabled(bool bInEnable);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Nvidia DLSS")
 	void SetNvidiaDLSSMode(ENvidiaDLSSMode InNvidiaDLSSMode);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Nvidia DLSS")

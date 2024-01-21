@@ -934,6 +934,29 @@ bool ULyraSettingsLocal::GetIsRayTracingEnabled() const
 	return bRayTracing;
 }
 
+// Nvidia DLSS Enabled
+
+void ULyraSettingsLocal::SetNvidiaDLSSEnabled(bool InNvidiaDLSSEnabled)
+{
+	NvidiaDLSSEnabled = InNvidiaDLSSEnabled;
+
+	if (GEngine)
+	{
+		if (const UWorld* World = GEngine->GetCurrentPlayWorld())
+		{
+			if (World->GetGameInstance()->GetClass()->ImplementsInterface(UNvidiaSettingsManagerInterface::StaticClass()))
+			{
+				INvidiaSettingsManagerInterface::Execute_SetNvidiaDLSSEnabled(World->GetGameInstance(), NvidiaDLSSEnabled);
+			}
+		}
+	}
+}
+
+bool ULyraSettingsLocal::GetNvidiaDLSSEnabled() const
+{
+	return NvidiaDLSSEnabled;
+}
+
 // Nvidia DLSS Mode
 
 void ULyraSettingsLocal::SetNvidiaDLSSMode(ENvidiaDLSSMode InNvidiaDLSSMode)

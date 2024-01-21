@@ -332,6 +332,17 @@ public:
 	UPROPERTY(config)
 	bool bRayTracing = false;
 
+	// Nvidia DLSS Enabled
+
+	UFUNCTION(BlueprintCallable)
+	bool GetNvidiaDLSSEnabled() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetNvidiaDLSSEnabled(bool bInEnable);
+
+	UPROPERTY(config)
+	bool NvidiaDLSSEnabled = false;
+
 	// Nvidia DLSS Mode
 
 	UFUNCTION(BlueprintCallable)
