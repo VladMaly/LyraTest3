@@ -646,7 +646,7 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 			NvidiaDLSSModeDependency = Setting;
 
 			Setting->AddEditCondition(MakeShared<FWhenCondition>([](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
-				const bool bDLSSSupported = UDLSSLibrary::IsDLSSSupported();
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSEnabled() && UDLSSLibrary::IsDLSSSupported();
 
 				if (!bDLSSSupported)
 				{
@@ -677,35 +677,13 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 			Setting->AddEditDependency(NvidiaDLSSModeDependency);
 			Setting->AddEditCondition(MakeShared<FWhenCondition>([NvidiaDLSSModeDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
 				const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
-				const bool bDLSSSupported = UDLSSLibrary::IsDLSSSupported();
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSEnabled() && UDLSSLibrary::IsDLSSSupported();
 
 				if (!bDLSSSupported || bDLSSModeOff)
 				{
 					InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported and not off."));
 				}
 			}));
-
-			/*
-			Setting->AddEditDependency(NvidiaDLSSModeDependency);
-			Setting->AddEditCondition(MakeShared<FWhenCondition>([this, WindowModeSetting, NvidiaDLSSModeDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
-				if (GEngine)
-				{
-					if (const UWorld* World = GEngine->GetCurrentPlayWorld())
-					{
-						if (World->GetGameInstance()->GetClass()->ImplementsInterface(UNvidiaSettingsManagerInterface::StaticClass()))
-						{
-							const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
-							const bool bDLSSSupported = INvidiaSettingsManagerInterface::Execute_GetDLSSSupported(World->GetGameInstance());
-
-							if (!bDLSSSupported || bDLSSModeOff)
-							{
-								InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported and not off."));
-							}
-						}
-					}
-				}
-			}));
-			*/
 
 			NvidiaGraphics->AddSetting(Setting);
 		}
@@ -726,7 +704,7 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 			Setting->AddEditDependency(NvidiaDLSSModeDependency);
 			Setting->AddEditCondition(MakeShared<FWhenCondition>([NvidiaDLSSModeDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
 				const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
-				const bool bDLSSSupported = UDLSSLibrary::IsDLSSSupported();
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSEnabled() && UDLSSLibrary::IsDLSSSupported();
 				const bool bDLSSHardwareCompatible = UDLSSLibrary::QueryDLSSSupport() != UDLSSSupport::NotSupportedIncompatibleHardware;
 
 				if (!bDLSSSupported || !bDLSSHardwareCompatible || bDLSSModeOff)
@@ -757,7 +735,7 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 			Setting->AddEditDependency(NvidiaDLSSModeDependency);
 			Setting->AddEditCondition(MakeShared<FWhenCondition>([NvidiaDLSSModeDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
 				const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
-				const bool bDLSSSupported = UDLSSLibrary::IsDLSSSupported();
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSEnabled() && UDLSSLibrary::IsDLSSSupported();
 
 				if (!bDLSSSupported || bDLSSModeOff)
 				{
@@ -804,6 +782,73 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 			NvidiaGraphics->AddSetting(Setting);
 		}
 		*/
+	}
+
+	// AMD FSR
+	////////////////////////////////////////////////////////////////////////////////////
+
+	{
+		UGameSettingCollection* NvidiaGraphics = NewObject<UGameSettingCollection>();
+		NvidiaGraphics->SetDevName(TEXT("AMD FSR"));
+		NvidiaGraphics->SetDisplayName(LOCTEXT("AMD_FSR_Name", "AMD FSR"));
+		Screen->AddSetting(NvidiaGraphics);
+
+		//----------------------------------------------------------------------------------
+		{
+			UGameSettingValueDiscreteDynamic_Enum* Setting = NewObject<UGameSettingValueDiscreteDynamic_Enum>();
+			Setting->SetDevName(TEXT("FSRMode"));
+			Setting->SetDisplayName(LOCTEXT("FSRMode_Name", "FSR Mode"));
+			Setting->SetDescriptionRichText(LOCTEXT("FSRMode_Description", "Select the FSR Mode."));
+
+			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetFSRMode));
+			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetFSRMode));
+
+			Setting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetFSRMode());
+			Setting->AddEnumOption(EFSRMode::Off, LOCTEXT("FSRMode_Off", "Off"));
+			Setting->AddEnumOption(EFSRMode::Quality, LOCTEXT("FSRMode_Quality", "Quality"));
+			Setting->AddEnumOption(EFSRMode::Balanced, LOCTEXT("FSRMode_Balanced", "Balanced"));
+			Setting->AddEnumOption(EFSRMode::Performance, LOCTEXT("FSRMode_Performance", "Performance"));
+
+			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+
+			NvidiaDLSSModeDependency = Setting;
+
+			Setting->AddEditCondition(MakeShared<FWhenCondition>([Setting](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSEnabled() && UDLSSLibrary::IsDLSSSupported();
+
+				if (bDLSSSupported)
+				{
+					InOutEditState.Disable(LOCTEXT("AMD_FSR", "Nvidia DLSS has to be disabled."));
+				}
+			}));
+
+			NvidiaGraphics->AddSetting(Setting);
+		}
+
+		//----------------------------------------------------------------------------------
+		{
+			UGameSettingValueDiscreteDynamic_Bool* Setting = NewObject<UGameSettingValueDiscreteDynamic_Bool>();
+			Setting->SetDevName(TEXT("FSRFrameGeneration"));
+			Setting->SetDisplayName(LOCTEXT("FSRFrameGeneration_Name", "FSR Frame Generation"));
+			Setting->SetDescriptionRichText(LOCTEXT("FSRFrameGeneration_Description", "Whether to enable FSR Frame Generation."));
+
+			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetFSRFrameGenerationEnabled));
+			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetFSRFrameGenerationEnabled));
+			Setting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetFSRFrameGenerationEnabled());
+
+			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+
+			Setting->AddEditCondition(MakeShared<FWhenCondition>([Setting](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
+				const bool bDLSSSupported = UDLSSLibrary::IsDLSSEnabled() && UDLSSLibrary::IsDLSSSupported();
+
+				if (bDLSSSupported)
+				{
+					InOutEditState.Disable(LOCTEXT("AMD_FSR", "Nvidia DLSS has to be disabled."));
+				}
+			}));
+
+			NvidiaGraphics->AddSetting(Setting);
+		}
 	}
 
 	// Advanced Graphics

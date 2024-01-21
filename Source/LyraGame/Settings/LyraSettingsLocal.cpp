@@ -31,6 +31,7 @@
 #include "ConsoleVariablesEditorModule.h"
 #include "NvidiaSettingsManagerInterface.h"
 #include "EnhancedActionKeyMapping.h"
+#include "DLSSLibrary.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(LyraSettingsLocal)
 
@@ -1029,6 +1030,84 @@ void ULyraSettingsLocal::SetNvidiaReflex(ENvidiaReflex InNvidiaReflex)
 ENvidiaReflex ULyraSettingsLocal::GetNvidiaReflex() const
 {
 	return NvidiaReflex;
+}
+
+// FSR Mode
+
+void ULyraSettingsLocal::SetFSRMode(EFSRMode InFSRMode)
+{
+	FSRMode = InFSRMode;
+
+	FConsoleVariablesEditorModule& ConsoleVariablesEditorModule = FConsoleVariablesEditorModule::Get();
+
+	const FString CommandName_FidelityFX_FSR3_QualityMode = "r.FidelityFX.FSR3.QualityMode";
+	if (const TWeakPtr<FConsoleVariablesEditorCommandInfo> CommandInfo_FidelityFX_FSR3_QualityMode = ConsoleVariablesEditorModule.FindCommandInfoByName(CommandName_FidelityFX_FSR3_QualityMode); CommandInfo_FidelityFX_FSR3_QualityMode.IsValid())
+	{
+		if (CommandInfo_FidelityFX_FSR3_QualityMode.Pin()->GetConsoleVariablePtr())
+		{
+			FString Target_FidelityFX_FSR3_QualityMode = "0";
+
+			switch (FSRMode)
+			{
+			case EFSRMode::Off:
+				Target_FidelityFX_FSR3_QualityMode = "0";
+				break;
+			case EFSRMode::Quality:
+				Target_FidelityFX_FSR3_QualityMode = "1";
+				break;
+			case EFSRMode::Balanced:
+				Target_FidelityFX_FSR3_QualityMode = "2";
+				break;
+			case EFSRMode::Performance:
+				Target_FidelityFX_FSR3_QualityMode = "3";
+				break;
+			}
+
+			CommandInfo_FidelityFX_FSR3_QualityMode.Pin()->ExecuteCommand(Target_FidelityFX_FSR3_QualityMode, true);
+		}
+		else
+		{
+			UE_LOG(LogConsoleVariablesEditor, Error,
+				TEXT("%hs: Command %s is not a variable type. Please do not enter console commands, only console variables."),
+				__FUNCTION__, *CommandName_FidelityFX_FSR3_QualityMode);
+		}
+	}
+}
+
+EFSRMode ULyraSettingsLocal::GetFSRMode() const
+{
+	return FSRMode;
+}
+
+// FSR Frame Generation
+
+void ULyraSettingsLocal::SetFSRFrameGenerationEnabled(bool bInEnable)
+{
+	bFSRFrameGeneration = bInEnable;
+
+	FConsoleVariablesEditorModule& ConsoleVariablesEditorModule = FConsoleVariablesEditorModule::Get();
+
+	const FString CommandName_FidelityFX_FI_Enabled = "r.FidelityFX.FI.Enabled";
+	if (const TWeakPtr<FConsoleVariablesEditorCommandInfo> CommandInfo_FidelityFX_FI_Enabled = ConsoleVariablesEditorModule.FindCommandInfoByName(CommandName_FidelityFX_FI_Enabled); CommandInfo_FidelityFX_FI_Enabled.IsValid())
+	{
+		if (CommandInfo_FidelityFX_FI_Enabled.Pin()->GetConsoleVariablePtr())
+		{
+			FString Target_FidelityFX_FI_Enabled = bFSRFrameGeneration ? "1" : "0";
+
+			CommandInfo_FidelityFX_FI_Enabled.Pin()->ExecuteCommand(Target_FidelityFX_FI_Enabled, true);
+		}
+		else
+		{
+			UE_LOG(LogConsoleVariablesEditor, Error,
+				TEXT("%hs: Command %s is not a variable type. Please do not enter console commands, only console variables."),
+				__FUNCTION__, *CommandName_FidelityFX_FI_Enabled);
+		}
+	}
+}
+
+bool ULyraSettingsLocal::GetFSRFrameGenerationEnabled() const
+{
+	return bFSRFrameGeneration;
 }
 
 // ---

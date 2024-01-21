@@ -42,6 +42,15 @@ enum class ENvidiaDLSSMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class EFSRMode : uint8
+{
+	Off = 0,
+	Quality,
+	Balanced,
+	Performance
+};
+
+UENUM(BlueprintType)
 enum class ENvidiaReflex : uint8
 {
 	Disabled = 0,
@@ -64,7 +73,7 @@ struct FLyraScalabilitySnapshot
 /**
  * ULyraSettingsLocal
  */
-UCLASS()
+UCLASS(Blueprintable)
 class ULyraSettingsLocal : public UGameUserSettings
 {
 	GENERATED_BODY()
@@ -303,10 +312,10 @@ public:
 public:
 	// Nvidia Upscaling
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	EVideoUpscalingMode GetNvidiaUpscaling() const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetNvidiaUpscaling(EVideoUpscalingMode InVideoUpscalingMode);
 
 	UPROPERTY(config)
@@ -314,10 +323,10 @@ public:
 
 	// Ray Tracing
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	bool GetIsRayTracingEnabled() const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetRayTracingEnabled(bool InEnableRayTracing);
 
 	UPROPERTY(config)
@@ -325,20 +334,20 @@ public:
 
 	// Nvidia DLSS Mode
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	ENvidiaDLSSMode GetNvidiaDLSSMode() const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetNvidiaDLSSMode(ENvidiaDLSSMode InNvidiaDLSSMode);
 
 	UPROPERTY(config)
 	ENvidiaDLSSMode NvidiaDLSSMode = ENvidiaDLSSMode::Balanced;
 
 	// Nvidia DLSS Sharpness
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	int32 GetNvidiaDLSSSharpness() const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetNvidiaDLSSSharpness(int32 InNvidiaDLSSSharpness);
 
 	UPROPERTY(config)
@@ -346,10 +355,10 @@ public:
 
 	// Nvidia DLSS Frame Generation
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	bool GetNvidiaDLSSFrameGenerationEnabled() const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetNvidiaDLSSFrameGenerationEnabled(bool bInEnable);
 
 	UPROPERTY(config)
@@ -357,14 +366,36 @@ public:
 
 	// Nvidia Reflex
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	ENvidiaReflex GetNvidiaReflex() const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetNvidiaReflex(ENvidiaReflex InNvidiaReflex);
 
 	UPROPERTY(config)
 	ENvidiaReflex NvidiaReflex = ENvidiaReflex::Enabled;
+
+	// FSR Mode
+
+	UFUNCTION(BlueprintCallable)
+	EFSRMode GetFSRMode() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetFSRMode(EFSRMode InFSRMode);
+
+	UPROPERTY(config)
+	EFSRMode FSRMode = EFSRMode::Balanced;
+
+	// FSR Frame Generation
+
+	UFUNCTION(BlueprintCallable)
+	bool GetFSRFrameGenerationEnabled() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetFSRFrameGenerationEnabled(bool bInEnable);
+	
+	UPROPERTY(config)
+	bool bFSRFrameGeneration = true;
 
 public:
 	/** Returns true if this platform can run the auto benchmark */
