@@ -20,6 +20,7 @@
 #include "Engine/GameInstance.h"
 #include "NvidiaSettingsManagerInterface.h"
 #include "DLSSLibrary.h"
+#include "StreamlineLibraryReflex.h"
 #include "Player/LyraLocalPlayer.h"
 
 #define LOCTEXT_NAMESPACE "Lyra"
@@ -748,10 +749,11 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 				const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
 				const bool bDLSSSupportedAndEnabled = NvidiaDLSSEnabledDependency->GetValueAsString().Equals("True") && UDLSSLibrary::IsDLSSSupported();
 				const bool bDLSSHardwareCompatible = UDLSSLibrary::QueryDLSSSupport() != UDLSSSupport::NotSupportedIncompatibleHardware;
+				const bool bDLSSIsFrameGenerationSupported = UStreamlineLibraryDLSSG::IsDLSSGSupported();
 
-				if (!bDLSSSupportedAndEnabled || !bDLSSHardwareCompatible || bDLSSModeOff)
+				if (!bDLSSSupportedAndEnabled || !bDLSSIsFrameGenerationSupported || !bDLSSHardwareCompatible || bDLSSModeOff)
 				{
-					InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported, enabled, hardware compatible and not off."));
+					InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported, enabled, hardware compatible, frame generation supported and not off."));
 				}
 			}));
 
@@ -780,8 +782,9 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 			Setting->AddEditCondition(MakeShared<FWhenCondition>([NvidiaDLSSModeDependency, NvidiaDLSSEnabledDependency](const ULocalPlayer*, FGameSettingEditableState& InOutEditState) {
 				const bool bDLSSModeOff = NvidiaDLSSModeDependency->GetValue<ENvidiaDLSSMode>() == ENvidiaDLSSMode::Off;
 				const bool bDLSSSupportedAndEnabled = NvidiaDLSSEnabledDependency->GetValueAsString().Equals("True") && UDLSSLibrary::IsDLSSSupported();
+				const bool bNvidiaReflexSupported = UStreamlineLibraryReflex::IsReflexSupported();
 
-				if (!bDLSSSupportedAndEnabled || bDLSSModeOff)
+				if (!bDLSSSupportedAndEnabled || !bNvidiaReflexSupported || bDLSSModeOff)
 				{
 					InOutEditState.Disable(LOCTEXT("NvidiaDLSS", "Nvidia DLSS has to be supported, enabled and not off."));
 				}
