@@ -24,11 +24,13 @@ bool ULyraGameplayAbility_Jump::CanActivateAbility(const FGameplayAbilitySpecHan
 		return false;
 	}
 
+	/*
 	const ALyraCharacter* LyraCharacter = Cast<ALyraCharacter>(ActorInfo->AvatarActor.Get());
 	if (!LyraCharacter || !LyraCharacter->CanJump())
 	{
 		return false;
 	}
+	*/
 
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
 	{
