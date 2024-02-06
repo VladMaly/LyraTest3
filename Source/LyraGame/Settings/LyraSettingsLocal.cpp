@@ -26,9 +26,9 @@
 #include "AudioModulationStatics.h"
 #include "Audio/LyraAudioSettings.h"
 #include "Audio/LyraAudioMixEffectsSubsystem.h"
-#include "ConsoleVariablesEditorCommandInfo.h"
-#include "ConsoleVariablesEditorLog.h"
-#include "ConsoleVariablesEditorModule.h"
+// #include "ConsoleVariablesEditorCommandInfo.h"
+// #include "ConsoleVariablesEditorLog.h"
+// #include "ConsoleVariablesEditorModule.h"
 #include "NvidiaSettingsManagerInterface.h"
 #include "EnhancedActionKeyMapping.h"
 #include "DLSSLibrary.h"
@@ -892,40 +892,34 @@ void ULyraSettingsLocal::SetRayTracingEnabled(bool InEnableRayTracing)
 {
 	bRayTracing = InEnableRayTracing;
 
-	FConsoleVariablesEditorModule& ConsoleVariablesEditorModule = FConsoleVariablesEditorModule::Get();
+	// Get the console manager instance
+	IConsoleManager& ConsoleManager = IConsoleManager::Get();
 
-	const FString CommandName_RayTraceForceAllEffects = "r.RayTracing.ForceAllRayTracingEffects";
-	if (const TWeakPtr<FConsoleVariablesEditorCommandInfo> CommandInfo_RayTraceForceAllEffects = ConsoleVariablesEditorModule.FindCommandInfoByName(CommandName_RayTraceForceAllEffects); CommandInfo_RayTraceForceAllEffects.IsValid())
+	// Define the console variable names
+	const FString CommandName_RayTraceForceAllEffects = TEXT("r.RayTracing.ForceAllRayTracingEffects");
+	const FString CommandName_LumenHardwareRayTracing = TEXT("r.lumen.hardwareraytracing");
+
+	// Get the console variables
+	IConsoleVariable* RayTraceForceAllEffectsVar = ConsoleManager.FindConsoleVariable(*CommandName_RayTraceForceAllEffects);
+	IConsoleVariable* LumenHardwareRayTracingVar = ConsoleManager.FindConsoleVariable(*CommandName_LumenHardwareRayTracing);
+
+	// Update the console variables if found
+	if (RayTraceForceAllEffectsVar)
 	{
-		if (CommandInfo_RayTraceForceAllEffects.Pin()->GetConsoleVariablePtr())
-		{
-			const FString TargetRayTraceForceAllEffects = bRayTracing ? "-1" : "0";
-
-			CommandInfo_RayTraceForceAllEffects.Pin()->ExecuteCommand(TargetRayTraceForceAllEffects, true);
-		}
-		else
-		{
-		UE_LOG(LogConsoleVariablesEditor, Error,
-			TEXT("%hs: Command %s is not a variable type. Please do not enter console commands, only console variables."),
-			__FUNCTION__, *CommandName_RayTraceForceAllEffects);
-		}
+		RayTraceForceAllEffectsVar->Set(bRayTracing ? -1 : 0);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Command %s is not a valid console variable."), *CommandName_RayTraceForceAllEffects);
 	}
 
-	const FString CommandName_LumenHardwareRayTracing = "r.lumen.hardwareraytracing";
-	if (const TWeakPtr<FConsoleVariablesEditorCommandInfo> CommandInfo_LumenHardwareRayTracing = ConsoleVariablesEditorModule.FindCommandInfoByName(CommandName_LumenHardwareRayTracing); CommandInfo_LumenHardwareRayTracing.IsValid())
+	if (LumenHardwareRayTracingVar)
 	{
-		if (CommandInfo_LumenHardwareRayTracing.Pin()->GetConsoleVariablePtr())
-		{
-			const FString TargetLumenHardwareRayTracing = bRayTracing ? "1" : "0";
-
-			CommandInfo_LumenHardwareRayTracing.Pin()->ExecuteCommand(TargetLumenHardwareRayTracing, true);
-		}
-		else
-		{
-			UE_LOG(LogConsoleVariablesEditor, Error,
-				TEXT("%hs: Command %s is not a variable type. Please do not enter console commands, only console variables."),
-				__FUNCTION__, *CommandName_LumenHardwareRayTracing);
-		}
+		LumenHardwareRayTracingVar->Set(bRayTracing ? 1 : 0);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Command %s is not a valid console variable."), *CommandName_LumenHardwareRayTracing);
 	}
 }
 
@@ -1061,39 +1055,41 @@ void ULyraSettingsLocal::SetFSRMode(EFSRMode InFSRMode)
 {
 	FSRMode = InFSRMode;
 
-	FConsoleVariablesEditorModule& ConsoleVariablesEditorModule = FConsoleVariablesEditorModule::Get();
+	// Get the console manager instance
+	IConsoleManager& ConsoleManager = IConsoleManager::Get();
 
-	const FString CommandName_FidelityFX_FSR3_QualityMode = "r.FidelityFX.FSR3.QualityMode";
-	if (const TWeakPtr<FConsoleVariablesEditorCommandInfo> CommandInfo_FidelityFX_FSR3_QualityMode = ConsoleVariablesEditorModule.FindCommandInfoByName(CommandName_FidelityFX_FSR3_QualityMode); CommandInfo_FidelityFX_FSR3_QualityMode.IsValid())
+	// Define the console variable name
+	const FString CommandName_FidelityFX_FSR3_QualityMode = TEXT("r.FidelityFX.FSR3.QualityMode");
+
+	// Get the console variable
+	IConsoleVariable* FidelityFX_FSR3_QualityModeVar = ConsoleManager.FindConsoleVariable(*CommandName_FidelityFX_FSR3_QualityMode);
+
+	// Update the console variable if found
+	if (FidelityFX_FSR3_QualityModeVar)
 	{
-		if (CommandInfo_FidelityFX_FSR3_QualityMode.Pin()->GetConsoleVariablePtr())
-		{
-			FString Target_FidelityFX_FSR3_QualityMode = "0";
+		FString Target_FidelityFX_FSR3_QualityMode = TEXT("0");
 
-			switch (FSRMode)
-			{
-			case EFSRMode::Off:
-				Target_FidelityFX_FSR3_QualityMode = "0";
-				break;
-			case EFSRMode::Quality:
-				Target_FidelityFX_FSR3_QualityMode = "1";
-				break;
-			case EFSRMode::Balanced:
-				Target_FidelityFX_FSR3_QualityMode = "2";
-				break;
-			case EFSRMode::Performance:
-				Target_FidelityFX_FSR3_QualityMode = "3";
-				break;
-			}
-
-			CommandInfo_FidelityFX_FSR3_QualityMode.Pin()->ExecuteCommand(Target_FidelityFX_FSR3_QualityMode, true);
-		}
-		else
+		switch (FSRMode)
 		{
-			UE_LOG(LogConsoleVariablesEditor, Error,
-				TEXT("%hs: Command %s is not a variable type. Please do not enter console commands, only console variables."),
-				__FUNCTION__, *CommandName_FidelityFX_FSR3_QualityMode);
+		case EFSRMode::Off:
+			Target_FidelityFX_FSR3_QualityMode = TEXT("0");
+			break;
+		case EFSRMode::Quality:
+			Target_FidelityFX_FSR3_QualityMode = TEXT("1");
+			break;
+		case EFSRMode::Balanced:
+			Target_FidelityFX_FSR3_QualityMode = TEXT("2");
+			break;
+		case EFSRMode::Performance:
+			Target_FidelityFX_FSR3_QualityMode = TEXT("3");
+			break;
 		}
+
+		FidelityFX_FSR3_QualityModeVar->Set(*Target_FidelityFX_FSR3_QualityMode);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Command %s is not a valid console variable."), *CommandName_FidelityFX_FSR3_QualityMode);
 	}
 }
 
@@ -1103,28 +1099,28 @@ EFSRMode ULyraSettingsLocal::GetFSRMode() const
 }
 
 // FSR Frame Generation
-
 void ULyraSettingsLocal::SetFSRFrameGenerationEnabled(bool bInEnable)
 {
 	bFSRFrameGeneration = bInEnable;
 
-	FConsoleVariablesEditorModule& ConsoleVariablesEditorModule = FConsoleVariablesEditorModule::Get();
+	// Get the console manager instance
+	IConsoleManager& ConsoleManager = IConsoleManager::Get();
 
-	const FString CommandName_FidelityFX_FI_Enabled = "r.FidelityFX.FI.Enabled";
-	if (const TWeakPtr<FConsoleVariablesEditorCommandInfo> CommandInfo_FidelityFX_FI_Enabled = ConsoleVariablesEditorModule.FindCommandInfoByName(CommandName_FidelityFX_FI_Enabled); CommandInfo_FidelityFX_FI_Enabled.IsValid())
+	// Define the console variable name
+	const FString CommandName_FidelityFX_FI_Enabled = TEXT("r.FidelityFX.FI.Enabled");
+
+	// Get the console variable
+	IConsoleVariable* FidelityFX_FI_EnabledVar = ConsoleManager.FindConsoleVariable(*CommandName_FidelityFX_FI_Enabled);
+
+	// Update the console variable if found
+	if (FidelityFX_FI_EnabledVar)
 	{
-		if (CommandInfo_FidelityFX_FI_Enabled.Pin()->GetConsoleVariablePtr())
-		{
-			FString Target_FidelityFX_FI_Enabled = bFSRFrameGeneration ? "1" : "0";
-
-			CommandInfo_FidelityFX_FI_Enabled.Pin()->ExecuteCommand(Target_FidelityFX_FI_Enabled, true);
-		}
-		else
-		{
-			UE_LOG(LogConsoleVariablesEditor, Error,
-				TEXT("%hs: Command %s is not a variable type. Please do not enter console commands, only console variables."),
-				__FUNCTION__, *CommandName_FidelityFX_FI_Enabled);
-		}
+		FString Target_FidelityFX_FI_Enabled = bFSRFrameGeneration ? TEXT("1") : TEXT("0");
+		FidelityFX_FI_EnabledVar->Set(*Target_FidelityFX_FI_Enabled);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Command %s is not a valid console variable."), *CommandName_FidelityFX_FI_Enabled);
 	}
 }
 
