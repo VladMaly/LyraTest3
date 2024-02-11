@@ -45,6 +45,8 @@ void ALyraGameState::PostInitializeComponents()
 
 	check(AbilitySystemComponent);
 	AbilitySystemComponent->InitAbilityActorInfo(/*Owner=*/ this, /*Avatar=*/ this);
+
+	GEngine->OnTravelPreBrowse().AddUObject(this, &ALyraGameState::OnTravelPreBrowse);
 }
 
 UAbilitySystemComponent* ALyraGameState::GetAbilitySystemComponent() const
@@ -137,6 +139,11 @@ APlayerState* ALyraGameState::GetRecorderPlayerState() const
 	// TODO: Maybe auto select it if null?
 
 	return RecorderPlayerState;
+}
+
+void ALyraGameState::OnTravelPreBrowse(UWorld* World)
+{
+	OnTravelPreBrowseEvent.Broadcast();
 }
 
 void ALyraGameState::OnRep_RecorderPlayerState()
