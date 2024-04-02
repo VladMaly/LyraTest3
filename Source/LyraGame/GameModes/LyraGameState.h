@@ -16,8 +16,6 @@ class ULyraExperienceManagerComponent;
 class UObject;
 struct FFrame;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTravelPreBrowse_Event);
-
 /**
  * ALyraGameState
  *
@@ -75,14 +73,6 @@ public:
 	// Delegate called when the replay player state changes
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRecorderPlayerStateChanged, APlayerState*);
 	FOnRecorderPlayerStateChanged OnRecorderPlayerStateChangedEvent;
-
-	// Delegate to broadcast when travel browse is about to be processed
-	UPROPERTY(BlueprintAssignable)
-	FOnTravelPreBrowse_Event OnTravelPreBrowseEvent;
-
-protected:
-	/** Called when browse travel logic is about to be processed */
-	virtual void OnTravelPreBrowse(UWorld* World);
 
 private:
 	// Handles loading and managing the current gameplay experience
