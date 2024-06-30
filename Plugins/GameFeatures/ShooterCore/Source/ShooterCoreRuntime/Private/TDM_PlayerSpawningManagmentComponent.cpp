@@ -43,7 +43,7 @@ AActor* UTDM_PlayerSpawningManagmentComponent::OnChoosePlayerStart(AController* 
 	for (APlayerState* PS : GameState->PlayerArray)
 	{
 		const int32 TeamId = TeamSubsystem->FindTeamFromObject(PS);
-		
+
 		// We should have a TeamId by now...
 		if (PS->IsOnlyASpectator() || !ensure(TeamId != INDEX_NONE))
 		{
@@ -51,10 +51,22 @@ AActor* UTDM_PlayerSpawningManagmentComponent::OnChoosePlayerStart(AController* 
 		}
 
 		// If the other player isn't on the same team, lets find the furthest spawn from them.
-		if (TeamId != PlayerTeamId)
+		// if (TeamId != PlayerTeamId)
 		{
 			for (ALyraPlayerStart* PlayerStart : PlayerStarts)
 			{
+				// Red team 1
+				if (PlayerTeamId == 1 && PlayerStart->GetActorLocation().X >= X_Axis_Compare)
+				{
+					continue;
+				}
+
+				// Blue team 2
+				if (PlayerTeamId == 2 && PlayerStart->GetActorLocation().X < X_Axis_Compare)
+				{
+					continue;
+				}
+
 				if (APawn* Pawn = PS->GetPawn())
 				{
 					const double Distance = PlayerStart->GetDistanceTo(Pawn);
@@ -75,6 +87,10 @@ AActor* UTDM_PlayerSpawningManagmentComponent::OnChoosePlayerStart(AController* 
 							MaxDistance = Distance;
 						}
 					}
+				}
+				else
+				{
+					BestPlayerStart = PlayerStart;
 				}
 			}
 		}

@@ -4,6 +4,7 @@ Intermediate
 Saved
 .vscode
 .vs
+.vsconfig
 *.VC.db
 *.opensdf
 *.opendb
@@ -21,3 +22,4 @@ Plugins/Streamline
 
 #FSR3
 Plugins/FSR3
+Plugins/FSR3MovieRenderPipeline

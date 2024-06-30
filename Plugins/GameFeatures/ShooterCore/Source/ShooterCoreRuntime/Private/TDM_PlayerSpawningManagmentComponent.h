@@ -26,6 +26,9 @@ public:
 	virtual AActor* OnChoosePlayerStart(AController* Player, TArray<ALyraPlayerStart*>& PlayerStarts) override;
 	virtual void OnFinishRestartPlayer(AController* Player, const FRotator& StartRotation) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	float X_Axis_Compare = 100;
+
 protected:
 
 };
