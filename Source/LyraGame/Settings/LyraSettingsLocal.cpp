@@ -953,7 +953,7 @@ void ULyraSettingsLocal::SetNvidiaDLSSEnabled(bool InNvidiaDLSSEnabled)
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.AllowAsyncWorkloads 0"));
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.CaptureDebugUI 0"));
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.ShowDebugView 0"));
-			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.OverrideSwapChainDX12 0"));
+			// GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.OverrideSwapChainDX12 0"));
 
 			GEngine->Exec(nullptr, TEXT("r.NGX.DLSS.Enable 1"));
 		}
@@ -968,7 +968,7 @@ void ULyraSettingsLocal::SetNvidiaDLSSEnabled(bool InNvidiaDLSSEnabled)
 			// GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.AllowAsyncWorkloads 1"));
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.CaptureDebugUI 1"));
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.ShowDebugView 1"));
-			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.OverrideSwapChainDX12 1"));
+			// GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.OverrideSwapChainDX12 1"));
 		}
 	}
 }
