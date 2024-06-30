@@ -947,7 +947,8 @@ void ULyraSettingsLocal::SetNvidiaDLSSEnabled(bool InNvidiaDLSSEnabled)
 		if (InNvidiaDLSSEnabled)
 		{
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FSR3.Enabled 0"));
-			// GEngine->Exec(nullptr, TEXT("r.TemporalAA.Upsampling 0"));
+			
+			GEngine->Exec(nullptr, TEXT("r.TemporalAA.Upscaler 1"));
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.ShowDebugTearLines 0"));
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.UpdateGlobalFrameTime 0"));
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.AllowAsyncWorkloads 0"));
@@ -955,12 +956,14 @@ void ULyraSettingsLocal::SetNvidiaDLSSEnabled(bool InNvidiaDLSSEnabled)
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.ShowDebugView 0"));
 			// GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.OverrideSwapChainDX12 0"));
 
+			GEngine->Exec(nullptr, TEXT("r.NGX.Enable 1"));
 			GEngine->Exec(nullptr, TEXT("r.NGX.DLSS.Enable 1"));
 		}
 		else
 		{
+			GEngine->Exec(nullptr, TEXT("r.NGX.Enable 0"));
 			GEngine->Exec(nullptr, TEXT("r.NGX.DLSS.Enable 0"));
-		
+
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FSR3.Enabled 1"));
 			GEngine->Exec(nullptr, TEXT("r.TemporalAA.Upsampling 1"));
 			GEngine->Exec(nullptr, TEXT("r.FidelityFX.FI.ShowDebugTearLines 1"));
@@ -1084,8 +1087,6 @@ void ULyraSettingsLocal::SetFSRMode(EFSRMode InFSRMode)
 {
 	FSRMode = InFSRMode;
 
-	UE_LOG(LogTemp, Warning, TEXT("ULyraSettingsLocal::SetFSRMode called"));
-
 	// Get the console manager instance
 	IConsoleManager& ConsoleManager = IConsoleManager::Get();
 
@@ -1114,7 +1115,12 @@ void ULyraSettingsLocal::SetFSRMode(EFSRMode InFSRMode)
 		case EFSRMode::Performance:
 			Target_FidelityFX_FSR3_QualityMode = TEXT("3");
 			break;
+		case EFSRMode::Ultra_Performance:
+			Target_FidelityFX_FSR3_QualityMode = TEXT("4");
+			break;
 		}
+
+		UE_LOG(LogTemp, Error, TEXT("ULyraSettingsLocal::SetFSRMode called with command: %s %s."), *CommandName_FidelityFX_FSR3_QualityMode , *Target_FidelityFX_FSR3_QualityMode);
 
 		FidelityFX_FSR3_QualityModeVar->Set(*Target_FidelityFX_FSR3_QualityMode);
 	}

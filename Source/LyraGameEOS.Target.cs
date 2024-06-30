@@ -10,5 +10,7 @@ public class LyraGameEOSTarget : LyraGameTarget
 		// Add override directory for EOS config files
 		// We have to recompile the engine to add the custom config preprocessor definition, but that is currently not possible for installed builds
 		CustomConfig = "EOS";
+		
+		bUseLoggingInShipping = true;
 	}
 }

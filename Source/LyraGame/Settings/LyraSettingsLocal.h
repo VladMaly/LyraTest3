@@ -47,7 +47,8 @@ enum class EFSRMode : uint8
 	Off = 0,
 	Quality,
 	Balanced,
-	Performance
+	Performance,
+	Ultra_Performance
 };
 
 UENUM(BlueprintType)

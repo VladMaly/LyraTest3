@@ -10,6 +10,8 @@ public class LyraClientTarget : TargetRules
 		Type = TargetType.Client;
 
 		ExtraModuleNames.AddRange(new string[] { "LyraGame" });
+		
+		bUseLoggingInShipping = true;
 
 		LyraGameTarget.ApplySharedLyraTargetSettings(this);
 	}

@@ -855,6 +855,7 @@ UGameSettingCollection* ULyraGameSettingRegistry::InitializeVideoSettings(ULyraL
 			Setting->AddEnumOption(EFSRMode::Quality, LOCTEXT("FSRMode_Quality", "Quality"));
 			Setting->AddEnumOption(EFSRMode::Balanced, LOCTEXT("FSRMode_Balanced", "Balanced"));
 			Setting->AddEnumOption(EFSRMode::Performance, LOCTEXT("FSRMode_Performance", "Performance"));
+			Setting->AddEnumOption(EFSRMode::Ultra_Performance, LOCTEXT("FSRMode_Ultra_Performance", "Ultra Performance"));
 
 			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
 

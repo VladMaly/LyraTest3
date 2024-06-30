@@ -15,6 +15,8 @@ public class LyraEditorTarget : TargetRules
 		{
 			NativePointerMemberBehaviorOverride = PointerMemberBehavior.Disallow;
 		}
+		
+		bUseLoggingInShipping = true;
 
 		LyraGameTarget.ApplySharedLyraTargetSettings(this);
 

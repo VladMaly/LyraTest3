@@ -14,6 +14,8 @@ public class LyraServerTarget : TargetRules
 
 		LyraGameTarget.ApplySharedLyraTargetSettings(this);
 
+		bUseLoggingInShipping = true;
+
 		bUseChecksInShipping = true;
 	}
 }
